@@ -1,6 +1,19 @@
 import { ChevronDown, Mic, Pin, PinOff, Sparkles, Square, Volume2 } from "lucide-react";
 import clsx from "clsx";
 
+const DIFFICULTY_STYLES = {
+  Easy: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  Medium: "bg-amber-50 text-amber-700 border-amber-200",
+  Hard: "bg-rose-50 text-rose-700 border-rose-200"
+};
+
+const TYPE_STYLES = {
+  Technical: "bg-blue-50 text-blue-700 border-blue-200",
+  Behavioral: "bg-purple-50 text-purple-700 border-purple-200",
+  "System Design": "bg-cyan-50 text-cyan-700 border-cyan-200",
+  Coding: "bg-orange-50 text-orange-700 border-orange-200"
+};
+
 function QuestionAccordion({
   question,
   isActive,
@@ -14,6 +27,9 @@ function QuestionAccordion({
   speakingId,
   listeningId
 }) {
+  const difficulty = question.difficulty || null;
+  const questionType = question.questionType || null;
+
   return (
     <div
       className={clsx(
@@ -27,7 +43,33 @@ function QuestionAccordion({
             <span className="mt-0.5 text-lg font-semibold text-slate-400">Q</span>
             <div>
               <p className="text-lg font-medium text-slate-900">{question.question}</p>
-              <p className="mt-2 text-sm text-slate-500">{question.tags?.join(", ")}</p>
+
+              {/* Difficulty and Question Type badges */}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {difficulty && (
+                  <span
+                    className={clsx(
+                      "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                      DIFFICULTY_STYLES[difficulty] || "bg-slate-50 text-slate-700 border-slate-200"
+                    )}
+                  >
+                    {difficulty}
+                  </span>
+                )}
+                {questionType && (
+                  <span
+                    className={clsx(
+                      "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                      TYPE_STYLES[questionType] || "bg-slate-50 text-slate-700 border-slate-200"
+                    )}
+                  >
+                    {questionType}
+                  </span>
+                )}
+                {question.tags?.length > 0 && (
+                  <p className="text-xs text-slate-400">{question.tags.join(", ")}</p>
+                )}
+              </div>
             </div>
           </div>
         </button>

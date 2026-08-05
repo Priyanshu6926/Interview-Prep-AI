@@ -1,3 +1,11 @@
+const ANGLE_TYPE_MAP = {
+  fundamentals: "Technical",
+  debugging: "Technical",
+  tradeoff: "System Design",
+  project: "Behavioral",
+  design: "System Design"
+};
+
 const interviewAngles = [
   {
     id: "fundamentals",
@@ -112,6 +120,8 @@ export function generateFallbackQuestions({
   const topics = buildTopics(focusAreas, count);
   const used = new Set(existingQuestions.map(normalizeQuestion));
 
+  const difficultyForExperience = experience <= 1 ? "Easy" : experience <= 3 ? "Medium" : "Hard";
+
   const generated = topics.map((topic, index) => {
     const angle = interviewAngles[index % interviewAngles.length];
     const question = angle.buildQuestion({ topic, role, experience, resumeProfile });
@@ -125,6 +135,8 @@ export function generateFallbackQuestions({
       return {
         title: `${topic}: ${fallbackAngle.title}`,
         question: alternateQuestion,
+        difficulty: difficultyForExperience,
+        questionType: ANGLE_TYPE_MAP[fallbackAngle.id] || "Technical",
         answer: fallbackAngle.buildAnswer({ topic, role, experience, resumeProfile }),
         explanation: fallbackAngle.buildExplanation({ topic, role, experience, resumeProfile }),
         tags: [topic, fallbackAngle.id, role],
@@ -132,6 +144,11 @@ export function generateFallbackQuestions({
         userAnswer: "",
         lastEvaluation: {
           score: null,
+          overallScore: null,
+          scoreBreakdown: {},
+          strengths: [],
+          missingPoints: [],
+          improvedAnswer: "",
           feedback: ""
         }
       };
@@ -141,6 +158,8 @@ export function generateFallbackQuestions({
     return {
       title: `${topic}: ${angle.title} ${uniqueIndex}`,
       question,
+      difficulty: difficultyForExperience,
+      questionType: ANGLE_TYPE_MAP[angle.id] || "Technical",
       answer: angle.buildAnswer({ topic, role, experience, resumeProfile }),
       explanation: angle.buildExplanation({ topic, role, experience, resumeProfile }),
       tags: [topic, angle.id, role],
@@ -148,6 +167,11 @@ export function generateFallbackQuestions({
       userAnswer: "",
       lastEvaluation: {
         score: null,
+        overallScore: null,
+        scoreBreakdown: {},
+        strengths: [],
+        missingPoints: [],
+        improvedAnswer: "",
         feedback: ""
       }
     };
@@ -169,23 +193,33 @@ export function generateFallbackExplanation(question) {
 }
 
 export function generateFallbackEvaluation(answer, evaluationContext = {}) {
-  const { relevance = 0, coverage = 0, wordCount = 0 } = evaluationContext;
-  let score = 20 + Math.round(relevance * 45) + Math.round(coverage * 25) + Math.min(15, Math.round(wordCount / 8));
+  const wordCount = String(answer || "").trim().split(/\s+/).filter(Boolean).length;
+  const baseScore = wordCount < 20 ? 25 : wordCount < 50 ? 45 : 60;
+  const score = Math.max(10, Math.min(95, baseScore));
 
-  if (wordCount < 20) {
-    score = Math.min(score, 35);
-  }
+  const feedback =
+    wordCount < 20
+      ? "Your answer does not seem closely connected to the actual interview question yet. To improve the score, answer the specific topic directly, use the important technical terms from the question, and explain one realistic example tied to that concept."
+      : "Your answer has some useful structure, but it can be stronger. Improve it by covering the actual topic more directly, adding one specific implementation example, and explaining at least one tradeoff or practical decision.";
 
-  if (relevance < 0.12) {
-    score = Math.min(score, 40);
-  }
-
-  score = Math.max(10, Math.min(95, score));
   return {
+    // Legacy flat fields
     score,
-    feedback:
-      relevance < 0.12
-        ? "Your answer does not seem closely connected to the actual interview question yet. To improve the score, answer the specific topic directly, use the important technical terms from the question, and explain one realistic example tied to that concept."
-        : "Your answer has some useful structure, but it can be stronger. Improve it by covering the actual topic more directly, adding one specific implementation example, and explaining at least one tradeoff or practical decision."
+    feedback,
+    // 4-pillar scorecard
+    overallScore: score,
+    scoreBreakdown: {
+      technicalAccuracy: score,
+      communicationClarity: score,
+      problemSolvingStructure: score,
+      completeness: score
+    },
+    strengths: wordCount >= 20 ? ["You provided some content relevant to the topic"] : [],
+    missingPoints: [
+      "Technical depth and precision",
+      "A concrete implementation example",
+      "Discussion of tradeoffs or limitations"
+    ],
+    improvedAnswer: ""
   };
 }

@@ -1,5 +1,45 @@
 import mongoose from "mongoose";
 
+const attemptSchema = new mongoose.Schema(
+  {
+    answer: {
+      type: String,
+      required: true
+    },
+    score: {
+      type: Number,
+      default: null
+    },
+    overallScore: {
+      type: Number,
+      default: null
+    },
+    scoreBreakdown: {
+      technicalAccuracy: { type: Number, default: null },
+      communicationClarity: { type: Number, default: null },
+      problemSolvingStructure: { type: Number, default: null },
+      completeness: { type: Number, default: null }
+    },
+    strengths: {
+      type: [String],
+      default: []
+    },
+    missingPoints: {
+      type: [String],
+      default: []
+    },
+    feedback: {
+      type: String,
+      default: ""
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  { _id: true }
+);
+
 const questionSchema = new mongoose.Schema(
   {
     title: String,
@@ -11,6 +51,16 @@ const questionSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    difficulty: {
+      type: String,
+      enum: ["Easy", "Medium", "Hard"],
+      default: "Medium"
+    },
+    questionType: {
+      type: String,
+      enum: ["Technical", "Behavioral", "System Design", "Coding"],
+      default: "Technical"
+    },
     userAnswer: {
       type: String,
       default: ""
@@ -20,9 +70,32 @@ const questionSchema = new mongoose.Schema(
       default: ""
     },
     lastEvaluation: {
+      // Legacy flat score field — kept for backwards compatibility
       score: {
         type: Number,
         default: null
+      },
+      overallScore: {
+        type: Number,
+        default: null
+      },
+      scoreBreakdown: {
+        technicalAccuracy: { type: Number, default: null },
+        communicationClarity: { type: Number, default: null },
+        problemSolvingStructure: { type: Number, default: null },
+        completeness: { type: Number, default: null }
+      },
+      strengths: {
+        type: [String],
+        default: []
+      },
+      missingPoints: {
+        type: [String],
+        default: []
+      },
+      improvedAnswer: {
+        type: String,
+        default: ""
       },
       feedback: {
         type: String,
@@ -30,29 +103,7 @@ const questionSchema = new mongoose.Schema(
       }
     },
     attempts: {
-      type: [
-        new mongoose.Schema(
-          {
-            answer: {
-              type: String,
-              required: true
-            },
-            score: {
-              type: Number,
-              default: null
-            },
-            feedback: {
-              type: String,
-              default: ""
-            },
-            createdAt: {
-              type: Date,
-              default: Date.now
-            }
-          },
-          { _id: true }
-        )
-      ],
+      type: [attemptSchema],
       default: []
     },
     tags: {

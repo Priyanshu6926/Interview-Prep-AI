@@ -2,7 +2,7 @@ import Session from "../models/Session.js";
 import {
   evaluateReadiness,
   generateInterviewQuestions,
-  generateQuestionExplanation
+  streamQuestionExplanation
 } from "../services/geminiService.js";
 import { parseResume } from "../services/resumeService.js";
 
@@ -154,12 +154,19 @@ export async function explainQuestion(req, res, next) {
       throw new Error("Question not found.");
     }
 
-    question.explanation = await generateQuestionExplanation(question, session.role);
+    // Stream explanation to client via SSE, then save the full text to MongoDB
+    const fullExplanation = await streamQuestionExplanation(question, session.role, res);
+    question.explanation = fullExplanation;
     await session.save();
-
-    res.json({ session });
+    // Response is already ended by streamQuestionExplanation — do not call res.json()
   } catch (error) {
-    next(error);
+    // If headers haven't been sent yet (early errors), delegate to error middleware
+    if (!res.headersSent) {
+      next(error);
+    } else {
+      // Stream already started — try to send an error event then close
+      try { res.write(`event: error\ndata: ${JSON.stringify({ message: error.message })}\n\n`); res.end(); } catch {}
+    }
   }
 }
 
@@ -188,10 +195,22 @@ export async function evaluateQuestion(req, res, next) {
     });
 
     question.userAnswer = submittedAnswer;
-    question.lastEvaluation = evaluation;
+    question.lastEvaluation = {
+      score: evaluation.score,
+      overallScore: evaluation.overallScore,
+      scoreBreakdown: evaluation.scoreBreakdown || {},
+      strengths: evaluation.strengths || [],
+      missingPoints: evaluation.missingPoints || [],
+      improvedAnswer: evaluation.improvedAnswer || "",
+      feedback: evaluation.feedback
+    };
     question.attempts.push({
       answer: submittedAnswer,
       score: evaluation.score,
+      overallScore: evaluation.overallScore,
+      scoreBreakdown: evaluation.scoreBreakdown || {},
+      strengths: evaluation.strengths || [],
+      missingPoints: evaluation.missingPoints || [],
       feedback: evaluation.feedback
     });
     await session.save();

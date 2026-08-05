@@ -5,6 +5,9 @@ import api from "../services/api";
 import QuestionAccordion from "../components/QuestionAccordion";
 import { formatDate } from "../utils/formatters";
 
+const TOKEN_KEY = "interview-prep-token";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
 function parseRichExplanation(text) {
   if (!text) {
     return [];
@@ -37,6 +40,8 @@ function SessionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [explanationLoadingId, setExplanationLoadingId] = useState(null);
+  const [streamingExplanation, setStreamingExplanation] = useState("");
+  const [isStreamingExplanation, setIsStreamingExplanation] = useState(false);
   const [speakingId, setSpeakingId] = useState(null);
   const [listeningId, setListeningId] = useState(null);
   const [transcript, setTranscript] = useState("");
@@ -91,14 +96,85 @@ function SessionDetailPage() {
     setSession(data.session);
   };
 
+  /**
+   * SSE streaming explanation:
+   * Uses fetch() with a streaming body reader because EventSource only
+   * supports GET. Sends the JWT manually in the Authorization header.
+   */
   const requestExplanation = async (questionId) => {
     setExplanationLoadingId(questionId);
+    setActiveQuestionId(questionId);
+    setStreamingExplanation("");
+    setIsStreamingExplanation(true);
+
     try {
-      const { data } = await api.post(`/sessions/${sessionId}/questions/${questionId}/explain`);
-      setSession(data.session);
-      setActiveQuestionId(questionId);
+      const token = localStorage.getItem(TOKEN_KEY);
+      const response = await fetch(
+        `${API_BASE}/sessions/${sessionId}/questions/${questionId}/explain`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream"
+          }
+        }
+      );
+
+      if (!response.ok || !response.body) {
+        throw new Error("Streaming explanation failed.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulatedText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith("event: done")) continue;
+
+          if (line.startsWith("data: ")) {
+            const rawData = line.slice(6);
+
+            // Check if this is the done event payload
+            try {
+              const parsed = JSON.parse(rawData);
+              if (parsed?.explanation !== undefined) {
+                // Final done event — update session state
+                setSession((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    questions: prev.questions.map((q) =>
+                      q._id === questionId ? { ...q, explanation: parsed.explanation } : q
+                    )
+                  };
+                });
+                continue;
+              }
+            } catch {
+              // Not JSON, it's a plain text chunk
+            }
+
+            // Unescape newlines encoded by the server
+            const chunk = rawData.replace(/\\n/g, "\n");
+            accumulatedText += chunk;
+            setStreamingExplanation(accumulatedText);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("SSE explanation error:", err);
     } finally {
       setExplanationLoadingId(null);
+      setIsStreamingExplanation(false);
     }
   };
 
@@ -403,12 +479,25 @@ function SessionDetailPage() {
               </div>
 
               <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <BookText className="h-4 w-4" />
-                  AI Explanation
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                    <BookText className="h-4 w-4" />
+                    AI Explanation
+                  </div>
+                  {isStreamingExplanation && (
+                    <span className="text-xs text-slate-400">
+                      {streamingExplanation.length} chars
+                    </span>
+                  )}
                 </div>
                 <div className="mt-3 space-y-3">
-                  {explanationBlocks.length ? (
+                  {isStreamingExplanation ? (
+                    // Live streaming view — show raw text with blinking cursor
+                    <div className="text-sm leading-7 text-slate-600 whitespace-pre-wrap">
+                      {streamingExplanation}
+                      <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-brand-500 align-middle" />
+                    </div>
+                  ) : explanationBlocks.length ? (
                     explanationBlocks.map((block, index) =>
                       block.type === "code" ? (
                         <div key={index} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950">
@@ -438,17 +527,102 @@ function SessionDetailPage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <button onClick={() => requestExplanation(activeQuestion._id)} className="secondary-button">
+                <button
+                  onClick={() => requestExplanation(activeQuestion._id)}
+                  className="secondary-button"
+                  disabled={isStreamingExplanation || explanationLoadingId === activeQuestion._id}
+                >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Refresh explanation
+                  {isStreamingExplanation ? "Streaming..." : "Refresh explanation"}
                 </button>
               </div>
 
+
               {score ? (
-                <div className="rounded-[24px] border border-brand-100 bg-brand-50 p-5">
-                  <p className="text-sm font-medium text-brand-700">Readiness score</p>
-                  <p className="mt-2 text-3xl font-semibold text-slate-950">{score.score}/100</p>
-                  <p className="mt-3 text-sm leading-7 text-slate-700">{score.feedback}</p>
+                <div className="rounded-[24px] border border-brand-100 bg-brand-50 p-5 space-y-5">
+                  {/* Overall Score Header */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-brand-700">Readiness score</p>
+                    <p className="text-3xl font-semibold text-slate-950">
+                      {score.overallScore ?? score.score ?? "–"}<span className="text-base font-medium text-slate-500">/100</span>
+                    </p>
+                  </div>
+
+                  {/* 4-Pillar Scorecard Grid */}
+                  {score.scoreBreakdown && Object.keys(score.scoreBreakdown).length > 0 && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { key: "technicalAccuracy", label: "Technical Accuracy" },
+                        { key: "communicationClarity", label: "Communication" },
+                        { key: "problemSolvingStructure", label: "Problem Solving" },
+                        { key: "completeness", label: "Completeness" }
+                      ].map(({ key, label }) => {
+                        const val = score.scoreBreakdown[key] ?? null;
+                        const color =
+                          val === null ? "bg-slate-200"
+                          : val >= 80 ? "bg-emerald-500"
+                          : val >= 55 ? "bg-amber-400"
+                          : "bg-rose-400";
+                        return (
+                          <div key={key} className="rounded-2xl bg-white p-3 border border-slate-100">
+                            <p className="text-xs font-medium text-slate-500">{label}</p>
+                            <p className="mt-1 text-xl font-semibold text-slate-900">
+                              {val !== null ? val : "–"}
+                            </p>
+                            <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100">
+                              <div
+                                className={`h-1.5 rounded-full transition-all ${color}`}
+                                style={{ width: val !== null ? `${val}%` : "0%" }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Strengths */}
+                  {score.strengths?.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Strengths</p>
+                      <ul className="mt-2 space-y-1">
+                        {score.strengths.map((s, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                            <span className="mt-0.5 text-emerald-500">✓</span>
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Missing Points */}
+                  {score.missingPoints?.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Missing Points</p>
+                      <ul className="mt-2 space-y-1">
+                        {score.missingPoints.map((m, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                            <span className="mt-0.5 text-amber-500">⚠</span>
+                            {m}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Overall Feedback */}
+                  {score.feedback && (
+                    <p className="text-sm leading-7 text-slate-700">{score.feedback}</p>
+                  )}
+
+                  {/* AI Improved Answer */}
+                  {score.improvedAnswer && (
+                    <div className="rounded-2xl bg-white border border-slate-200 p-4">
+                      <p className="text-xs font-semibold text-brand-700 uppercase tracking-wide">AI Improved Answer</p>
+                      <p className="mt-2 text-sm leading-7 text-slate-600">{score.improvedAnswer}</p>
+                    </div>
+                  )}
                 </div>
               ) : null}
 
@@ -462,9 +636,28 @@ function SessionDetailPage() {
                       .map((attempt) => (
                         <div key={attempt._id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                           <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-medium text-slate-900">{attempt.score}/100</p>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {attempt.overallScore ?? attempt.score ?? "–"}/100
+                            </p>
                             <p className="text-xs text-slate-500">{formatDate(attempt.createdAt)}</p>
                           </div>
+                          {attempt.scoreBreakdown && Object.values(attempt.scoreBreakdown).some((v) => v !== null) && (
+                            <div className="mt-2 grid grid-cols-2 gap-1.5">
+                              {[
+                                { key: "technicalAccuracy", label: "Tech" },
+                                { key: "communicationClarity", label: "Comm" },
+                                { key: "problemSolvingStructure", label: "PS" },
+                                { key: "completeness", label: "Compl" }
+                              ].map(({ key, label }) => {
+                                const val = attempt.scoreBreakdown[key];
+                                return val !== null && val !== undefined ? (
+                                  <span key={key} className="text-xs text-slate-500">
+                                    {label}: <span className="font-medium text-slate-700">{val}</span>
+                                  </span>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
                           <p className="mt-2 text-sm leading-6 text-slate-600">{attempt.feedback}</p>
                         </div>
                       ))

@@ -8,10 +8,10 @@ function DashboardPage() {
   const { sessions, loading, error, removeSession } = useSessions();
   const pinnedCount = sessions.reduce((sum, session) => sum + session.questions.filter((item) => item.isPinned).length, 0);
   const attempts = sessions.flatMap((session) => session.questions.flatMap((item) => item.attempts || []));
-  const averageScore = attempts.length
-    ? Math.round(attempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0) / attempts.length)
-    : null;
-  const latestTrend = attempts.slice(-5).map((attempt) => attempt.score || 0);
+  const scores = attempts.map((attempt) => attempt.overallScore ?? attempt.score ?? 0).filter((s) => s > 0);
+  const averageScore = scores.length ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length) : null;
+  const bestScore = scores.length ? Math.max(...scores) : null;
+  const latestTrend = scores.slice(-10);
 
   const handleDeleteSession = async (event, sessionId) => {
     event.preventDefault();
@@ -48,8 +48,8 @@ function DashboardPage() {
             <p className="mt-4 text-3xl font-semibold text-slate-950">{sessions.length}</p>
           </article>
           <article className="glass-panel p-5">
-            <p className="text-sm text-slate-500">Pinned questions</p>
-            <p className="mt-4 text-3xl font-semibold text-slate-950">{pinnedCount}</p>
+            <p className="text-sm text-slate-500">Total attempts</p>
+            <p className="mt-4 text-3xl font-semibold text-slate-950">{attempts.length}</p>
           </article>
           <article className="glass-panel p-5">
             <p className="text-sm text-slate-500">Readiness avg</p>
@@ -101,13 +101,25 @@ function DashboardPage() {
               <p className="text-sm font-medium text-slate-900">Voice practice trend</p>
               <p className="text-sm text-slate-500">Latest readiness scores across your spoken attempts.</p>
             </div>
-            <TrendingUp className="h-5 w-5 text-brand-500" />
+            <div className="flex items-center gap-3">
+              {bestScore !== null && (
+                <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  Best: {bestScore}/100
+                </span>
+              )}
+              <TrendingUp className="h-5 w-5 text-brand-500" />
+            </div>
           </div>
           <div className="mt-4 flex h-28 items-end gap-2">
             {latestTrend.length ? (
               latestTrend.map((score, index) => (
                 <div key={`${score}-${index}`} className="flex flex-1 flex-col items-center gap-2">
-                  <div className="w-full rounded-t-2xl bg-slate-950/90" style={{ height: `${Math.max(score, 12)}%` }} />
+                  <div
+                    className={`w-full rounded-t-2xl transition-all ${
+                      score >= 80 ? "bg-emerald-500" : score >= 55 ? "bg-amber-400" : "bg-rose-400"
+                    }`}
+                    style={{ height: `${Math.max(score, 12)}%` }}
+                  />
                   <span className="text-xs text-slate-500">{score}</span>
                 </div>
               ))
@@ -127,7 +139,15 @@ function DashboardPage() {
             </div>
           ) : null}
 
-          {sessions.map((session) => (
+          {sessions.map((session) => {
+            // Compute per-session average readiness score
+            const sessionAttempts = session.questions.flatMap((q) => q.attempts || []);
+            const sessionScores = sessionAttempts.map((a) => a.overallScore ?? a.score ?? 0).filter((s) => s > 0);
+            const sessionAvg = sessionScores.length
+              ? Math.round(sessionScores.reduce((sum, s) => sum + s, 0) / sessionScores.length)
+              : null;
+
+            return (
             <div
               key={session._id}
               className="rounded-[28px] border border-slate-100 bg-white p-5 transition hover:border-brand-200 hover:shadow-soft"
@@ -143,9 +163,15 @@ function DashboardPage() {
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                     {badgeText(session.questions.length, "question")}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                    {badgeText(session.questions.filter((item) => item.isPinned).length, "pin")}
-                  </span>
+                  {sessionAvg !== null && (
+                    <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                      sessionAvg >= 80 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                      : sessionAvg >= 55 ? "bg-amber-50 border-amber-200 text-amber-700"
+                      : "bg-rose-50 border-rose-200 text-rose-700"
+                    }`}>
+                      Avg {sessionAvg}/100
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-4 text-sm text-slate-500">
@@ -170,7 +196,8 @@ function DashboardPage() {
               </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
