@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { BookText, Mic, MicOff, Pin, PlusCircle, Sparkles, Square, Volume2 } from "lucide-react";
+import { Award, BookText, Mic, MicOff, Pin, PlusCircle, Sparkles, Square, Volume2 } from "lucide-react";
 import api from "../services/api";
 import QuestionAccordion from "../components/QuestionAccordion";
+import ResumeAnalysisCard from "../components/ResumeAnalysisCard";
+import ReadinessReportModal from "../components/ReadinessReportModal";
 import { formatDate } from "../utils/formatters";
 
 const TOKEN_KEY = "interview-prep-token";
@@ -49,8 +51,22 @@ function SessionDetailPage() {
   const [score, setScore] = useState(null);
   const [evaluating, setEvaluating] = useState(false);
   const [addingMore, setAddingMore] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
   const recognitionRef = useRef(null);
   const speechUtteranceRef = useRef(null);
+
+  const handleReAnalyzeResume = async () => {
+    setIsAnalyzingResume(true);
+    try {
+      const { data } = await api.post(`/sessions/${sessionId}/analyze-resume`);
+      setSession(data.session);
+    } catch (err) {
+      console.error("Resume re-analysis failed:", err);
+    } finally {
+      setIsAnalyzingResume(false);
+    }
+  };
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -330,13 +346,26 @@ function SessionDetailPage() {
     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
       <section className="space-y-6">
         <div className="rounded-[32px] bg-white p-8 shadow-soft">
-          <h1 className="text-4xl font-semibold tracking-tight text-slate-950">{session.role}</h1>
-          <p className="mt-2 text-base text-slate-600">{session.focusAreas.join(", ")}</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-4xl font-semibold tracking-tight text-slate-950">{session.role}</h1>
+              <p className="mt-2 text-base text-slate-600">{session.focusAreas.join(", ")}</p>
+            </div>
+            <button
+              onClick={() => setShowReportModal(true)}
+              className="primary-button text-sm self-start"
+            >
+              <Award className="mr-2 h-4 w-4" />
+              Export Readiness Report
+            </button>
+          </div>
+
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white">Experience: {session.experience} Years</span>
             <span className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white">{session.questions.length} Q&amp;A</span>
             <span className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white">Last Updated: {formatDate(session.updatedAt)}</span>
           </div>
+
           {session.resumeProfile?.summary ? (
             <div className="mt-6 rounded-[24px] border border-brand-100 bg-brand-50 p-5">
               <p className="text-sm font-semibold text-brand-700">Resume tech summary</p>
@@ -360,6 +389,15 @@ function SessionDetailPage() {
             </div>
           ) : null}
         </div>
+
+        {/* Phase 4: Resume & ATS Gap Analysis Card */}
+        {session.resumeAnalysis && (
+          <ResumeAnalysisCard
+            analysis={session.resumeAnalysis}
+            onReAnalyze={handleReAnalyzeResume}
+            isAnalyzing={isAnalyzingResume}
+          />
+        )}
 
         <div className="rounded-[32px] bg-slate-50 p-6">
           <div className="mb-5 flex items-center justify-between">
@@ -672,6 +710,14 @@ function SessionDetailPage() {
           <p className="text-sm text-slate-500">Select a question to review.</p>
         )}
       </aside>
+
+      {/* Phase 4: Readiness Report Modal */}
+      {showReportModal && (
+        <ReadinessReportModal
+          session={session}
+          onClose={() => setShowReportModal(false)}
+        />
+      )}
     </div>
   );
 }

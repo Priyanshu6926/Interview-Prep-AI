@@ -4,7 +4,7 @@ import {
   generateInterviewQuestions,
   streamQuestionExplanation
 } from "../services/geminiService.js";
-import { parseResume } from "../services/resumeService.js";
+import { analyzeResumeMatch, parseResume } from "../services/resumeService.js";
 
 export async function createSession(req, res, next) {
   try {
@@ -33,16 +33,56 @@ export async function createSession(req, res, next) {
       resumeProfile
     });
 
+    const resumeAnalysis = resumeProfile
+      ? await analyzeResumeMatch({
+          resumeProfile,
+          role,
+          experience: normalizedExperience,
+          focusAreas: normalizedFocusAreas
+        })
+      : null;
+
     const session = await Session.create({
       user: req.user._id,
       role,
       experience: normalizedExperience,
       focusAreas: normalizedFocusAreas,
       resumeProfile,
+      resumeAnalysis,
       questions
     });
 
     res.status(201).json({ session });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function analyzeSessionResume(req, res, next) {
+  try {
+    const session = await Session.findOne({ _id: req.params.sessionId, user: req.user._id });
+
+    if (!session) {
+      res.status(404);
+      throw new Error("Session not found.");
+    }
+
+    if (!session.resumeProfile?.summary) {
+      res.status(400);
+      throw new Error("No resume uploaded for this session.");
+    }
+
+    const resumeAnalysis = await analyzeResumeMatch({
+      resumeProfile: session.resumeProfile,
+      role: session.role,
+      experience: session.experience,
+      focusAreas: session.focusAreas
+    });
+
+    session.resumeAnalysis = resumeAnalysis;
+    await session.save();
+
+    res.json({ resumeAnalysis, session });
   } catch (error) {
     next(error);
   }

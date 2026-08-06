@@ -159,6 +159,28 @@ const sessionSchema = new mongoose.Schema(
         default: []
       }
     },
+    resumeAnalysis: {
+      atsScore: {
+        type: Number,
+        default: null
+      },
+      matchingSkills: {
+        type: [String],
+        default: []
+      },
+      missingKeywords: {
+        type: [String],
+        default: []
+      },
+      projectRelevance: {
+        type: String,
+        default: ""
+      },
+      recommendations: {
+        type: [String],
+        default: []
+      }
+    },
     questions: {
       type: [questionSchema],
       default: []
