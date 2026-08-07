@@ -6,58 +6,58 @@ const ANGLE_TYPE_MAP = {
   design: "System Design"
 };
 
+const DIFFICULTY_PROGRESSION = ["Easy", "Easy", "Medium", "Medium", "Hard"];
+
 const interviewAngles = [
   {
     id: "fundamentals",
-    title: "Fundamentals Check",
+    title: "Core Fundamentals",
     buildQuestion: ({ topic, role, experience }) =>
-      `What is ${topic}, and why does it matter for a ${role} with ${experience} years of experience?`,
+      `What is ${topic}, and why is it essential for a ${role} with ${experience} years of experience?`,
     buildAnswer: ({ topic, role, experience }) =>
-      `A strong candidate answer would start by defining ${topic} in plain engineering language, then explain why it matters in the real work of a ${role}. The next part should connect the concept to implementation decisions, maintainability, performance, product quality, or reliability. For someone with ${experience} years of experience, the interviewer expects both conceptual clarity and evidence that the idea has shaped real design or coding choices.\n\nAfter the definition, a strong answer should include a practical example. For example, the candidate might describe a feature or system where ${topic} affected how data was structured, how components communicated, how requests were handled, or how edge cases were managed. This helps the answer sound grounded rather than theoretical.\n\nA polished answer should also mention tradeoffs or limitations. Interviewers generally respond better when a candidate explains not only why ${topic} is useful, but also when it becomes hard to manage, when an alternative might be better, and how to validate that the chosen approach is working in production.`,
+      `In my experience as a ${role}, ${topic} is fundamental because it provides the core building blocks for reliable software development. When explaining ${topic} in an interview, I define it in simple engineering terms: it represents the mechanism for managing state, logic, or execution flow safely.\n\nIn practical production work, understanding ${topic} helps prevent common performance bottlenecks and memory leaks. For a candidate with ${experience} years of experience, the key is demonstrating both conceptual precision and practical experience—explaining how proper application of ${topic} leads to cleaner abstractions, easier testing, and maintainable code.\n\nThe main tradeoff to keep in mind is avoiding over-engineering. While ${topic} is powerful, misapplying it can introduce unnecessary complexity or tight coupling. I always evaluate the requirements first before choosing the appropriate implementation pattern.`,
     buildExplanation: ({ topic, role }) =>
-      `Core Idea\nStart by defining ${topic} in plain language and explain what engineering problem it helps solve.\n\nWhy Interviewers Ask This\nFor a ${role}, this question checks whether you understand both the theory and the real-world use of ${topic}. The interviewer wants proof that you can connect the concept to implementation choices rather than reciting a definition.\n\nHow To Answer Well\nA strong answer moves in three steps: define the concept, explain where it shows up in real work, and give one concrete example from a feature or system. Stronger candidates also mention tradeoffs, limitations, or failure cases.\n\nPractical Example\nThink about a situation where ${topic} affected design, debugging, or maintainability. If you can describe what changed in the system because of that concept, your answer becomes much more convincing.`
+      `Core Idea\n${topic} is a foundational concept for a ${role}. Understanding this topic enables you to write clean, predictable, and robust code.\n\nWhy Interviewers Ask This\nInterviewers ask this question to verify that you possess solid theoretical knowledge and understand how ${topic} impacts daily development work.\n\nHow To Build A Strong Answer\n1. Provide a concise, clear definition of ${topic}.\n2. Explain its primary purpose in real-world application.\n3. Discuss best practices and potential pitfalls when using it.\n\nPractical Example\nWhen working on real-world projects, applying ${topic} correctly ensures that data flow remains consistent and system behavior is easy to reason about.`
+  },
+  {
+    id: "practical",
+    title: "Practical Implementation",
+    buildQuestion: ({ topic, role }) =>
+      `How do you implement and configure ${topic} in a production-ready ${role} project?`,
+    buildAnswer: ({ topic, role }) =>
+      `When implementing ${topic} in a ${role} project, I follow standard industry patterns to ensure reliability and scalability. I start by setting up modular components/modules with clear boundaries.\n\nNext, I establish proper error handling and logging around ${topic}. In production systems, silent failures or unhandled exceptions can cause catastrophic downstream issues. By adding defensive checks and structured logging, we can catch edge cases early.\n\nFinally, I write unit and integration tests covering both happy path scenarios and boundary conditions. This ensures that refactoring ${topic} later won't break existing functionality.`,
+    buildExplanation: ({ topic, role }) =>
+      `Core Idea\nImplementing ${topic} requires adherence to clean architecture principles, modular code organization, and defensive error handling.\n\nWhy Interviewers Ask This\nThis question evaluates your hands-on coding ability as a ${role} and whether you write production-grade code rather than theoretical scripts.\n\nHow To Build A Strong Answer\nWalk through your setup step-by-step: configuration, core logic implementation, exception handling, and automated test coverage.`
   },
   {
     id: "debugging",
     title: "Debugging Scenario",
     buildQuestion: ({ topic, role }) =>
-      `Suppose a feature related to ${topic} is behaving incorrectly in production. How would you debug the issue step by step as a ${role}?`,
+      `Suppose a feature related to ${topic} is failing intermittently in production. How would you debug and fix the issue step by step as a ${role}?`,
     buildAnswer: ({ topic, role }) =>
-      `A strong candidate answer would walk through a structured debugging path: first reproduce the problem, then narrow the failure surface, inspect the right signals, validate assumptions, and isolate the root cause. For ${topic}, a good answer should explain whether the first checks belong in logs, browser tools, API responses, state transitions, database records, or infrastructure metrics.\n\nInterviewers like to hear a hypothesis-driven workflow. That means the candidate should explain what they would test first, what result would confirm or reject the hypothesis, and how they would keep the system safe while investigating. For example, they might mention feature flags, limited rollbacks, guardrails, or temporary observability improvements.\n\nThe strongest answers end with prevention. After fixing the immediate bug, a good candidate should mention regression tests, stronger monitoring, clearer error handling, or architectural improvements that reduce the chance of similar failures in the future.`,
+      `When troubleshooting intermittent production failures in ${topic}, I follow a systematic, hypothesis-driven approach:\n\n1. **Reproduce & Observe**: I start by reviewing application logs, APM metrics, and error rates to identify correlation patterns (e.g., memory spikes, thread contention, network timeouts).\n2. **Isolate Root Cause**: I attempt to reproduce the failure in a staging environment using isolated test inputs or traffic shadowing. For ${topic}, I inspect memory allocation, state mutation, or async concurrency boundaries.\n3. **Apply & Verify Fix**: Once the bug is isolated, I implement a targeted fix, deploy it behind a feature flag or canary release, and verify that error rates return to zero.\n4. **Prevent Recurrence**: I add regression tests and update alerting rules to prevent similar issues from reoccurring in the future.`,
     buildExplanation: ({ topic }) =>
-      `This question is testing structured debugging judgment.\n\nFor ${topic}, the interviewer wants to hear how you reduce uncertainty, verify hypotheses, and move from symptoms to root cause.\n\nA great answer sounds methodical: reproduce, inspect, isolate, confirm, fix, and add prevention.`
+      `Core Idea\nIntermittent production bugs in ${topic} usually stem from unhandled edge cases, race conditions, resource leaks, or external dependency failures.\n\nWhy Interviewers Ask This\nInterviewers test your engineering maturity—how you remain calm, systematic, and data-driven under production outage pressure.\n\nHow To Build A Strong Answer\nStructure your answer into four clear phases: Observe & Log → Isolate Hypothesis → Fix & Validate → Add Preventive Telemetry.`
   },
   {
     id: "tradeoff",
-    title: "Tradeoff Discussion",
+    title: "Tradeoff & Architecture",
     buildQuestion: ({ topic, role }) =>
-      `What tradeoffs would you consider when choosing one approach over another for ${topic} in a ${role} interview setting?`,
+      `What architectural tradeoffs and performance considerations would you analyze when choosing an approach for ${topic} as a ${role}?`,
     buildAnswer: ({ topic }) =>
-      `A strong candidate answer should make it clear that there is rarely one universally correct solution for ${topic}. Instead, the right decision depends on scale, maintainability, delivery speed, performance, team familiarity, reliability requirements, and how expensive mistakes would be. The answer should compare at least two reasonable approaches instead of speaking as if the choice is obvious.\n\nA polished response explains what each option optimizes for. One option may be simpler to ship and easier for the team to maintain, while another might support more scale or flexibility at the cost of complexity. Interviewers want to hear that you understand these tradeoffs and that you can choose based on constraints, not habit.\n\nThe best ending is situational. A strong candidate would say something like: if the problem is small and fast-moving, I would optimize for simplicity first; if the system is already large or high-risk, I would accept more structure to reduce long-term cost. That kind of reasoning sounds much more senior in an interview.`,
+      `When evaluating architectural choices for ${topic}, there is no one-size-fits-all solution. The optimal decision depends on throughput, latency tolerances, team complexity, and maintenance overhead.\n\nOption A (Simpler Approach) offers rapid delivery and lower initial complexity, making it ideal for early-stage features or lower traffic volume. However, it may encounter scalability bottlenecks as user traffic grows.\n\nOption B (Distributed/Decoupled Approach) provides high throughput, fault isolation, and horizontal scalability, but introduces operational overhead, network latency, and eventual consistency challenges.\n\nMy decision framework relies on data: I start with the simplest solution that meets current SLA requirements, while designing clean interfaces so we can pivot to Option B if scale demands it.`,
     buildExplanation: ({ topic }) =>
-      `Interviewers ask this to see whether you can reason instead of recite.\n\nFor ${topic}, they want evidence that you understand competing priorities, such as simplicity versus flexibility or speed versus correctness.\n\nIf your answer explains why a decision changes under different constraints, it will sound much stronger.`
+      `Core Idea\nEngineering is the art of trade-offs. Choosing how to structure ${topic} involves balancing complexity, performance, cost, and developer velocity.\n\nWhy Interviewers Ask This\nSenior engineers are distinguished by their ability to compare alternatives objectively rather than dogmatically advocating a single tool.\n\nHow To Build A Strong Answer\nCompare two distinct architectural options, highlight pros/cons for each, and explain your situational decision framework.`
   },
   {
-    id: "project",
-    title: "Project-Based Follow-Up",
-    buildQuestion: ({ topic, role, resumeProfile }) =>
-      resumeProfile?.projects?.length
-        ? `On your resume, you mention work that likely touches ${topic}. How would you describe a real project where you applied ${topic} as a ${role}?`
-        : `Describe a project where you applied ${topic} as a ${role}. What problem were you solving, and what was your contribution?`,
-    buildAnswer: ({ topic }) =>
-      `A strong candidate answer should tell a clear project story: what the problem was, what constraints existed, what part of the work they owned, how ${topic} shaped the technical decisions, and what happened after the solution shipped. The answer should make the candidate's contribution specific instead of hiding behind "we" language the whole time.\n\nInterviewers usually care less about buzzwords and more about judgment. A good answer should therefore explain why a certain implementation was chosen, what risks were considered, and what changed because of that decision. Metrics, user impact, reliability gains, or delivery improvements all make the story stronger.\n\nThe best version of this answer ends with reflection. If the candidate can say what they learned, what they would improve next time, or how the project influenced later architectural choices, the answer feels more mature and credible.`,
-    buildExplanation: ({ topic }) =>
-      `This is a practical credibility question.\n\nFor ${topic}, the interviewer wants proof that you have used the concept in real project work and can explain your own contribution clearly.\n\nA clean structure is: context, challenge, action, result, and what you learned.`
-  },
-  {
-    id: "design",
-    title: "Design and Scalability",
+    id: "company_standards",
+    title: "Company Standard System Challenge",
     buildQuestion: ({ topic, role }) =>
-      `If you had to design or improve a system involving ${topic}, what architecture or implementation choices would you make first as a ${role}?`,
+      `How would you design a highly resilient, enterprise-scale system handling ${topic} to meet high availability (99.99%) and company production standards as a ${role}?`,
     buildAnswer: ({ topic, role }) =>
-      `A strong candidate answer should begin with requirements and constraints before naming any tools or patterns. For ${topic}, the interviewer expects the candidate to talk through scale, latency, ownership boundaries, observability, maintainability, and what could fail first. This shows structured design thinking instead of technology name-dropping.\n\nA good response then moves into the architecture itself: what the main components are, how data flows between them, where state lives, what gets cached or persisted, and what tradeoffs are being accepted. For a ${role}, this is where the candidate shows that they can reason about systems instead of only individual functions or screens.\n\nThe strongest answers also explain validation. A candidate should mention how they would monitor success, what metrics they would watch, how they would roll the design out safely, and what would trigger a redesign later if the constraints changed.`,
+      `To design an enterprise-grade system handling ${topic} at 99.99% availability, I architect for resilience at every tier:\n\n1. **Stateless Scalability**: Ensure service instances handling ${topic} are stateless so they can scale horizontally behind load balancers.\n2. **Resilience Patterns**: Implement circuit breakers, rate limiters, and exponential backoff retries with jitter to prevent cascading failures.\n3. **Data Consistency & Caching**: Use multi-region replication for storage and distributed caching (e.g., Redis) with TTLs to offload read pressure.\n4. **Observability & Guardrails**: Instrument distributed tracing (OpenTelemetry), health checks, and automated blue-green deployments with zero downtime.\n\nThis architecture guarantees high availability and compliance with top-tier enterprise standards for a ${role}.`,
     buildExplanation: ({ topic }) =>
-      `This question checks whether you can think beyond isolated features.\n\nFor ${topic}, the interviewer wants to hear how you move from requirements to design choices, what bottlenecks you expect, and how you would validate the solution after implementation.\n\nA strong answer names components, data flow, tradeoffs, and failure modes.`
+      `Core Idea\nEnterprise production standards require designing for high availability, fault tolerance, graceful degradation, and comprehensive observability around ${topic}.\n\nWhy Interviewers Ask This\nCompany-standard questions test whether you can design systems that handle massive traffic spikes and unexpected infrastructure outages.\n\nHow To Build A Strong Answer\nCover the core distributed system pillars: Load Balancing → Caching & Storage → Fault Tolerance (Circuit Breakers) → Observability & Rollouts.`
   }
 ];
 
@@ -66,7 +66,7 @@ function normalizeQuestion(question) {
 }
 
 function buildTopics(focusAreas, count) {
-  const concepts = focusAreas.length ? focusAreas : ["Core concepts", "Problem solving", "System design"];
+  const concepts = focusAreas.length ? focusAreas : ["Core concepts", "Practical engineering", "System architecture"];
   return Array.from({ length: count }, (_, index) => concepts[index % concepts.length]);
 }
 
@@ -120,22 +120,22 @@ export function generateFallbackQuestions({
   const topics = buildTopics(focusAreas, count);
   const used = new Set(existingQuestions.map(normalizeQuestion));
 
-  const difficultyForExperience = experience <= 1 ? "Easy" : experience <= 3 ? "Medium" : "Hard";
-
   const generated = topics.map((topic, index) => {
-    const angle = interviewAngles[index % interviewAngles.length];
+    const angleIndex = (existingQuestions.length + index) % interviewAngles.length;
+    const angle = interviewAngles[angleIndex];
     const question = angle.buildQuestion({ topic, role, experience, resumeProfile });
     const normalized = normalizeQuestion(question);
     const uniqueIndex = existingQuestions.length + index + 1;
+    const difficulty = DIFFICULTY_PROGRESSION[angleIndex % DIFFICULTY_PROGRESSION.length];
 
     if (used.has(normalized)) {
-      const fallbackAngle = interviewAngles[(index + 2) % interviewAngles.length];
+      const fallbackAngle = interviewAngles[(angleIndex + 2) % interviewAngles.length];
       const alternateQuestion = fallbackAngle.buildQuestion({ topic, role, experience, resumeProfile });
       used.add(normalizeQuestion(alternateQuestion));
       return {
         title: `${topic}: ${fallbackAngle.title}`,
         question: alternateQuestion,
-        difficulty: difficultyForExperience,
+        difficulty,
         questionType: ANGLE_TYPE_MAP[fallbackAngle.id] || "Technical",
         answer: fallbackAngle.buildAnswer({ topic, role, experience, resumeProfile }),
         explanation: fallbackAngle.buildExplanation({ topic, role, experience, resumeProfile }),
@@ -158,7 +158,7 @@ export function generateFallbackQuestions({
     return {
       title: `${topic}: ${angle.title} ${uniqueIndex}`,
       question,
-      difficulty: difficultyForExperience,
+      difficulty,
       questionType: ANGLE_TYPE_MAP[angle.id] || "Technical",
       answer: angle.buildAnswer({ topic, role, experience, resumeProfile }),
       explanation: angle.buildExplanation({ topic, role, experience, resumeProfile }),
@@ -181,14 +181,15 @@ export function generateFallbackQuestions({
 }
 
 export function generateFallbackExplanation(question) {
+  const text = question?.question || "this topic";
+  const tags = question?.tags || [];
+
   return (
-    `Core Idea\n${question.question} is really testing whether you understand the concept well enough to explain both the theory and the practical engineering decisions behind it.\n\n` +
-    `Why Interviewers Ask This\nInterviewers use questions like this to see whether you can move beyond a memorized definition and explain where the concept shows up in production work. They want to hear whether you understand impact, tradeoffs, constraints, and the situations where the concept becomes important.\n\n` +
-    `How To Build A Strong Answer\nStart with a crisp definition in simple language. Then connect that definition to the kind of system or feature where the concept matters. After that, walk through one realistic scenario, the decision you would make, why you would make it, and what could go wrong if the concept is misunderstood. A good answer should sound like you have applied the concept, not just read about it.\n\n` +
-    `Common Mistakes\nAvoid giving only a textbook definition. Avoid jumping straight into tools or buzzwords without explaining what problem the concept solves. Also avoid answers that sound absolute. Strong interview answers usually explain when an approach works well, what tradeoffs it introduces, and when another choice might be better.\n\n` +
-    `Practical Example\nImagine you are asked about component state in React. A better answer is not just "state stores data." A better answer explains that state is used for data that changes over time, like form values, loading flags, or selected filters, and that updating state triggers re-renders so the UI stays in sync with user actions. You could then continue by explaining when local state is enough and when shared state becomes necessary.\n\n` +
-    `Example Code\n\`\`\`jsx\nfunction SearchBox() {\n  const [query, setQuery] = useState(\"\");\n\n  return (\n    <input\n      value={query}\n      onChange={(event) => setQuery(event.target.value)}\n      placeholder=\"Search interviews\"\n    />\n  );\n}\n\`\`\`\n\n` +
-    `In an interview, code like this helps because it turns an abstract concept into something concrete and easy to reason about.`
+    `Core Idea\n${text} tests your understanding of engineering principles, implementation choices, and practical production constraints.\n\n` +
+    `Why Interviewers Ask This\nInterviewers use questions like this to evaluate whether you can move beyond memorized definitions to explain real-world tradeoffs, debugging methodologies, and design decisions.\n\n` +
+    `How To Build A Strong Answer\n1. State a clear, concise definition of the core concept.\n2. Explain how this concept functions in real production systems.\n3. Walk through one specific implementation scenario, describing tradeoffs and edge cases.\n\n` +
+    `Common Mistakes\nAvoid generic textbook definitions without practical context. Be specific about your choices, state limitations clearly, and explain preventive measures for failure scenarios.\n\n` +
+    `Practical Engineering Insight\nIn a real-world environment, addressing ${tags.join(" / ") || "key technical topics"} properly ensures high availability, clear code maintainability, and reliable error handling.`
   );
 }
 
@@ -203,10 +204,8 @@ export function generateFallbackEvaluation(answer, evaluationContext = {}) {
       : "Your answer has some useful structure, but it can be stronger. Improve it by covering the actual topic more directly, adding one specific implementation example, and explaining at least one tradeoff or practical decision.";
 
   return {
-    // Legacy flat fields
     score,
     feedback,
-    // 4-pillar scorecard
     overallScore: score,
     scoreBreakdown: {
       technicalAccuracy: score,

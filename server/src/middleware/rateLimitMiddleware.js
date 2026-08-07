@@ -12,7 +12,7 @@ export const aiRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => (req.user?._id ? String(req.user._id) : ipKeyGenerator(req.ip)),
-  validate: { xForwardedForHeader: false, ipKeyGenerator: false },
+  validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
   message: {
     message: "Too many AI requests. Please wait a moment before trying again."
   }

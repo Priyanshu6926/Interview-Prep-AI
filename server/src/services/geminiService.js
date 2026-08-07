@@ -145,7 +145,7 @@ export async function generateInterviewQuestions({
   const difficultyHint = experienceToDifficultyHint(experience);
 
   const prompt = `
-Generate exactly ${count} interview questions and complete reference answers for a ${role} with ${experience} years of experience.
+Generate exactly ${count} interview questions and complete reference answers for a ${role} candidate with ${experience} years of experience.
 Focus areas: ${focusAreas.join(", ")}.
 Difficulty guidance: ${difficultyHint}.
 Avoid repeating or paraphrasing these existing questions: ${existingQuestions.length ? existingQuestions.join(" | ") : "none"}.
@@ -157,25 +157,22 @@ ${
     : "No resume uploaded. Generate general questions for the role and focus areas."
 }
 
-The set of ${count} questions must be diverse and must cover different interview angles:
-- 1 fundamentals or core concept question
-- 1 practical implementation question
-- 1 debugging or troubleshooting scenario
-- 1 tradeoff or comparison question
-- 1 architecture, design, or project discussion question
-(If count > 5, continue cycling through these angles.)
+CRITICAL STRUCTURE REQUIREMENTS:
+The set of ${count} questions MUST be strictly ordered from BASIC to ADVANCED COMPANY STANDARDS:
+1. Question 1 (Easy - Core Fundamentals): Basic definition, core concept, and baseline principles for ${role}.
+2. Question 2 (Easy/Medium - Practical Usage): Implementation details, standard syntax, or feature usage in real projects.
+3. Question 3 (Medium - Debugging & Troubleshooting): A specific production error, unexpected behavior, or edge case scenario.
+4. Question 4 (Medium/Hard - Tradeoffs & Architecture): Comparing tools/approaches, performance tradeoffs, and architectural design choices.
+5. Question 5 (Hard - Enterprise & Company Standards): Enterprise-grade system challenge, high-concurrency, resilience, microservices, or production scale.
+(If count > 5, continue cycling through this progressive structure.)
 
-Each question must:
-- Be unique and directly relevant to the role and focus areas
-- Be phrased exactly like a real interviewer would ask it — not as a study prompt
-- Differ in intent and angle from the others
-
-For each question, set:
-- "difficulty": one of "Easy", "Medium", or "Hard" (based on the difficulty guidance)
-- "questionType": one of "Technical", "Behavioral", "System Design", or "Coding"
-- "answer": an ideal candidate answer written as a complete interview response in 3 to 5 substantial paragraphs
-- "explanation": a detailed teaching-style breakdown with multiple paragraphs and a code example in a fenced code block if useful
-- "tags": 2 to 4 topic tags
+QUALITY & FORMAT INSTRUCTIONS:
+- Each question must be phrased EXACTLY as a top-tier tech company interviewer would ask it.
+- "answer": Write an ideal, comprehensive FIRST-PERSON interview response as spoken by a top 5% candidate ("When working on ${role} projects, I approach this by... First, I..."). NEVER write meta-descriptions like "A strong candidate answer would say...". Write the exact candidate speech.
+- "difficulty": set strictly according to the progressive scale ("Easy", "Easy", "Medium", "Medium", "Hard").
+- "questionType": set to one of "Technical", "Behavioral", "System Design", or "Coding".
+- "explanation": a detailed teaching-style breakdown matching the target tech stack.
+- "tags": 2 to 4 topic tags.
 `;
 
   try {
@@ -251,26 +248,30 @@ export async function streamQuestionExplanation(question, role, res) {
   }
 
   const prompt = `
-Explain this interview question for a ${role} candidate in a practical teaching style.
+Explain this interview question for a ${role} candidate in a clear, practical teaching style.
+
+Target Role: ${role}
 Question: ${question.question}
-Reference answer: ${question.answer}
+Reference Answer: ${question.answer}
+Topic Tags: ${question.tags ? question.tags.join(", ") : role}
 
-Write a detailed explanation that feels like a strong senior mentor walking the candidate through the topic.
-The explanation should be richer than the reference answer and teach the topic in depth.
+Write a detailed, high-quality technical breakdown.
 
-Required sections (use these as headings):
+Required Headings:
 1. Core Idea
 2. Why Interviewers Ask This
 3. How to Build a Strong Answer
 4. Common Mistakes
-5. Practical Example
+5. Practical Example & Code Snippet
 
-Rules:
-- Be detailed and genuinely useful, not brief
-- Use multiple paragraphs under each section
-- If code helps explain the concept, include a short code example in a fenced code block
-- Keep code focused and interview-relevant
-- Use plain English and connect the explanation to the interview context
+CRITICAL INSTRUCTIONS:
+- The explanation, practical example, and code snippet MUST BE 100% SPECIFIC TO THIS EXACT QUESTION AND ${role} TECH STACK.
+- If the question is about Java/Spring, write a production Java code snippet in the fenced code block.
+- If the question is about Database/SQL, write SQL queries in the code block.
+- If the question is about Python, write clean Python code.
+- If the question is about Frontend/CSS/DOM/React, write frontend code matching the topic.
+- NEVER output generic code snippets (like a SearchBox component) unless the question is explicitly about a search input component!
+- Keep code clean, modern, and production-oriented.
 `;
 
   try {

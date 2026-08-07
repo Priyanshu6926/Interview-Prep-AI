@@ -27,94 +27,117 @@ function QuestionAccordion({
   speakingId,
   listeningId
 }) {
-  const difficulty = question.difficulty || null;
-  const questionType = question.questionType || null;
+  const difficulty = question.difficulty || "Medium";
+  const questionType = question.questionType || "Technical";
 
   return (
     <div
       className={clsx(
-        "rounded-[24px] border bg-white px-5 py-4 transition",
-        isActive ? "border-brand-200 shadow-soft" : "border-slate-100"
+        "rounded-[24px] border bg-white p-5 transition shadow-sm hover:shadow-md",
+        isActive ? "border-brand-400 ring-2 ring-brand-100 bg-brand-50/20" : "border-slate-100 hover:border-slate-200"
       )}
     >
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <button onClick={onSelect} className="flex-1 text-left">
+      {/* Top Section: Full Width Question Text */}
+      <div className="w-full">
+        <button onClick={onSelect} className="w-full text-left group">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 text-lg font-semibold text-slate-400">Q</span>
-            <div>
-              <p className="text-lg font-medium text-slate-900">{question.question}</p>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-600 group-hover:bg-brand-100 group-hover:text-brand-700 transition">
+              Q
+            </span>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold leading-6 text-slate-900 group-hover:text-brand-700 transition break-words">
+                {question.question}
+              </h3>
 
-              {/* Difficulty and Question Type badges */}
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {difficulty && (
-                  <span
-                    className={clsx(
-                      "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-                      DIFFICULTY_STYLES[difficulty] || "bg-slate-50 text-slate-700 border-slate-200"
-                    )}
-                  >
-                    {difficulty}
-                  </span>
-                )}
-                {questionType && (
-                  <span
-                    className={clsx(
-                      "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-                      TYPE_STYLES[questionType] || "bg-slate-50 text-slate-700 border-slate-200"
-                    )}
-                  >
-                    {questionType}
-                  </span>
-                )}
+              {/* Difficulty, Question Type & Topic Badges */}
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <span
+                  className={clsx(
+                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                    DIFFICULTY_STYLES[difficulty] || "bg-slate-50 text-slate-700 border-slate-200"
+                  )}
+                >
+                  {difficulty}
+                </span>
+                <span
+                  className={clsx(
+                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                    TYPE_STYLES[questionType] || "bg-slate-50 text-slate-700 border-slate-200"
+                  )}
+                >
+                  {questionType}
+                </span>
                 {question.tags?.length > 0 && (
-                  <p className="text-xs text-slate-400">{question.tags.join(", ")}</p>
+                  <span className="text-xs text-slate-400 truncate max-w-[200px]">
+                    {question.tags.join(" • ")}
+                  </span>
                 )}
               </div>
             </div>
           </div>
         </button>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Action Bar: Dedicated bottom toolbar so text is never squeezed */}
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          {/* Learn More Button */}
           <button
-            onClick={speakingId === question._id ? onStopSpeak : onSpeak}
-            className={clsx(
-              "inline-flex h-10 w-10 items-center justify-center rounded-xl border transition",
-              speakingId === question._id ? "border-brand-300 bg-brand-50 text-brand-700" : "border-slate-200 text-slate-500"
-            )}
-            title={speakingId === question._id ? "Stop audio" : "Ask question aloud"}
+            onClick={onExplain}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-100"
           >
-            {speakingId === question._id ? <Square className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            <Sparkles className="h-3.5 w-3.5" />
+            {isExplaining ? "Thinking..." : "Learn More"}
           </button>
+
+          {/* Voice Answer Button */}
           <button
             onClick={onStartAnswer}
             className={clsx(
-              "inline-flex h-10 w-10 items-center justify-center rounded-xl border transition",
-              listeningId === question._id ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-500"
+              "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition",
+              listeningId === question._id
+                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
             )}
             title="Answer with voice"
           >
-            <Mic className="h-4 w-4" />
+            <Mic className="h-3.5 w-3.5" />
+            <span>Answer</span>
           </button>
+        </div>
+
+        <div className="flex items-center gap-1.5 ml-auto">
+          {/* Speak Question Button */}
           <button
-            onClick={onExplain}
-            className="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-700 transition hover:bg-cyan-100"
+            onClick={speakingId === question._id ? onStopSpeak : onSpeak}
+            className={clsx(
+              "inline-flex h-8 w-8 items-center justify-center rounded-xl border transition",
+              speakingId === question._id ? "border-brand-300 bg-brand-50 text-brand-700" : "border-slate-200 text-slate-500 hover:bg-slate-50"
+            )}
+            title={speakingId === question._id ? "Stop audio" : "Ask question aloud"}
           >
-            <Sparkles className="h-4 w-4" />
-            {isExplaining ? "Thinking..." : "Learn More"}
+            {speakingId === question._id ? <Square className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
           </button>
+
+          {/* Pin Button */}
           <button
             onClick={onTogglePin}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
             title={question.isPinned ? "Unpin question" : "Pin question"}
           >
-            {question.isPinned ? <Pin className="h-4 w-4 text-brand-500" /> : <PinOff className="h-4 w-4" />}
+            {question.isPinned ? <Pin className="h-3.5 w-3.5 text-brand-500 fill-brand-500" /> : <PinOff className="h-3.5 w-3.5" />}
           </button>
+
+          {/* Toggle / View Detail Button */}
           <button
             onClick={onSelect}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
-            title="Open answer"
+            className={clsx(
+              "inline-flex h-8 w-8 items-center justify-center rounded-xl border transition",
+              isActive ? "border-brand-300 bg-brand-50 text-brand-700" : "border-slate-200 text-slate-500 hover:bg-slate-50"
+            )}
+            title="Open question details"
           >
-            <ChevronDown className={clsx("h-4 w-4 transition", isActive && "rotate-180")} />
+            <ChevronDown className={clsx("h-4 w-4 transition-transform duration-200", isActive && "rotate-180")} />
           </button>
         </div>
       </div>
