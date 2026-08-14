@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
+import helmet from "helmet";
 import authRoutes from "./routes/authRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
@@ -13,6 +14,12 @@ dotenv.config();
 
 const app = express();
 
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false
+  })
+);
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",

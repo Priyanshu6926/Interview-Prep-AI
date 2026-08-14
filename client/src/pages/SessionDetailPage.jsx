@@ -5,10 +5,10 @@ import api from "../services/api";
 import QuestionAccordion from "../components/QuestionAccordion";
 import ResumeAnalysisCard from "../components/ResumeAnalysisCard";
 import ReadinessReportModal from "../components/ReadinessReportModal";
+import InterviewTimer from "../components/InterviewTimer";
+import { useToast } from "../context/ToastContext";
 import { formatDate } from "../utils/formatters";
-
-const TOKEN_KEY = "interview-prep-token";
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+import { API_BASE, TOKEN_KEY } from "../utils/constants";
 
 function parseRichExplanation(text) {
   if (!text) {
@@ -51,6 +51,7 @@ function SessionDetailPage() {
   const [score, setScore] = useState(null);
   const [evaluating, setEvaluating] = useState(false);
   const [addingMore, setAddingMore] = useState(false);
+  const toast = useToast();
   const [showReportModal, setShowReportModal] = useState(false);
   const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
   const recognitionRef = useRef(null);
@@ -61,8 +62,9 @@ function SessionDetailPage() {
     try {
       const { data } = await api.post(`/sessions/${sessionId}/analyze-resume`);
       setSession(data.session);
+      toast.success("Resume analysis updated.");
     } catch (err) {
-      console.error("Resume re-analysis failed:", err);
+      toast.error(err.response?.data?.message || "Resume re-analysis failed.");
     } finally {
       setIsAnalyzingResume(false);
     }
@@ -452,6 +454,9 @@ function SessionDetailPage() {
             </div>
 
             <div className="mt-8 space-y-5 text-slate-700">
+              {/* Practice Countdown Timer */}
+              <InterviewTimer />
+
               <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-5">
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                   <Volume2 className="h-4 w-4" />

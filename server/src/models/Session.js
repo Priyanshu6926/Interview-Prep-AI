@@ -191,6 +191,8 @@ const sessionSchema = new mongoose.Schema(
   }
 );
 
+sessionSchema.index({ user: 1, updatedAt: -1 });
+
 const Session = mongoose.model("Session", sessionSchema);
 
 export default Session;

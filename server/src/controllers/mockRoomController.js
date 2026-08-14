@@ -48,7 +48,20 @@ export async function joinMockRoom(req, res, next) {
       throw new Error("Mock room not found.");
     }
 
-    if (!room.guest) {
+    if (room.status === "ended") {
+      res.status(400);
+      throw new Error("This mock room has already ended.");
+    }
+
+    const isHost = String(room.host?.user) === String(req.user._id);
+    const isExistingGuest = room.guest && String(room.guest?.user) === String(req.user._id);
+
+    if (!isHost && !isExistingGuest) {
+      if (room.guest) {
+        res.status(403);
+        throw new Error("This mock room is already full with 2 participants.");
+      }
+
       room.guest = {
         user: req.user._id,
         name: req.user.name,
@@ -58,7 +71,7 @@ export async function joinMockRoom(req, res, next) {
       room.events.push({
         kind: "note",
         fromRole: "system",
-        content: `${req.user.name} joined the room.`
+        content: `${req.user.name} joined the room as peer.`
       });
       await room.save();
     }

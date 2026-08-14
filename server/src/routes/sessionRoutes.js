@@ -11,6 +11,7 @@ import {
   generateMoreQuestions,
   getSessionById,
   getSessions,
+  getUserAnalytics,
   togglePin
 } from "../controllers/sessionController.js";
 
@@ -19,6 +20,7 @@ const router = Router();
 router.use(protect);
 
 router.get("/", getSessions);
+router.get("/analytics", getUserAnalytics);
 router.post("/", aiRateLimit, upload.single("resume"), createSession);
 router.get("/:sessionId", getSessionById);
 router.delete("/:sessionId", deleteSession);

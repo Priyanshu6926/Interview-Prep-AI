@@ -35,20 +35,39 @@ function MockRoomDetailPage() {
   }, [room, user]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchRoom = async () => {
-      const { data } = await api.get(`/mock-rooms/${roomCode}`);
-      setRoom(data.room);
+      try {
+        const { data } = await api.get(`/mock-rooms/${roomCode}`);
+        if (isMounted) {
+          setRoom(data.room);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setMediaError(err.response?.data?.message || "Failed to sync room data.");
+        }
+      }
     };
 
     fetchRoom();
     const interval = setInterval(fetchRoom, 3000);
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [roomCode]);
 
   useEffect(() => {
     return () => {
-      peerRef.current?.close();
-      localStreamRef.current?.getTracks().forEach((track) => track.stop());
+      try {
+        peerRef.current?.close();
+        peerRef.current = null;
+        localStreamRef.current?.getTracks().forEach((track) => track.stop());
+        localStreamRef.current = null;
+      } catch {
+        // Safe cleanup
+      }
     };
   }, []);
 

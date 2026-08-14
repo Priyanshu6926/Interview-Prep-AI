@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import api from "../services/api";
+import { ExerciseSkeleton } from "../components/SkeletonCard";
 
 // ─── Language Configuration ───────────────────────────────────────────────────
 
@@ -135,6 +136,8 @@ function CodingLabPage() {
   const [results, setResults] = useState([]);
   const [summary, setSummary] = useState(null);
   const [filters, setFilters] = useState({ role: "", difficulty: "" });
+  const [loadingExercises, setLoadingExercises] = useState(true);
+  const [exercisesError, setExercisesError] = useState("");
 
   // AI states
   const [running, setRunning] = useState(false);
@@ -149,12 +152,20 @@ function CodingLabPage() {
 
   useEffect(() => {
     const fetchExercises = async () => {
-      const { data } = await api.get("/coding/exercises");
-      setExercises(data.exercises);
-      const first = data.exercises[0] || null;
-      if (first) {
-        setSelectedId(first._id);
-        setCode(getStarterCodeForLanguage(first, "javascript"));
+      setLoadingExercises(true);
+      setExercisesError("");
+      try {
+        const { data } = await api.get("/coding/exercises");
+        setExercises(data.exercises);
+        const first = data.exercises[0] || null;
+        if (first) {
+          setSelectedId(first._id);
+          setCode(getStarterCodeForLanguage(first, "javascript"));
+        }
+      } catch (err) {
+        setExercisesError(err.response?.data?.message || "Failed to load coding exercises. Please ensure the backend is running.");
+      } finally {
+        setLoadingExercises(false);
       }
     };
     fetchExercises();
@@ -300,34 +311,50 @@ function CodingLabPage() {
             </select>
           </div>
           <div className="mt-5 space-y-3">
-            {filteredExercises.map((exercise) => (
-              <button
-                key={exercise._id}
-                onClick={() => handleSelectExercise(exercise)}
-                className={clsx(
-                  "w-full rounded-[24px] border p-4 text-left transition",
-                  selectedId === exercise._id
-                    ? "border-brand-200 bg-brand-50"
-                    : "border-slate-100 bg-white hover:border-slate-200"
-                )}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-base font-semibold text-slate-950">{exercise.title}</p>
-                    <p className="mt-0.5 text-sm text-slate-500">{exercise.role}</p>
+            {loadingExercises ? (
+              <>
+                <ExerciseSkeleton />
+                <ExerciseSkeleton />
+                <ExerciseSkeleton />
+              </>
+            ) : null}
+
+            {exercisesError ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs leading-5 text-rose-700">
+                {exercisesError}
+              </div>
+            ) : null}
+
+            {!loadingExercises &&
+              !exercisesError &&
+              filteredExercises.map((exercise) => (
+                <button
+                  key={exercise._id}
+                  onClick={() => handleSelectExercise(exercise)}
+                  className={clsx(
+                    "w-full rounded-[24px] border p-4 text-left transition",
+                    selectedId === exercise._id
+                      ? "border-brand-200 bg-brand-50 shadow-soft"
+                      : "border-slate-100 bg-white hover:border-slate-200"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-base font-semibold text-slate-950">{exercise.title}</p>
+                      <p className="mt-0.5 text-sm text-slate-500">{exercise.role}</p>
+                    </div>
+                    <span
+                      className={clsx(
+                        "rounded-full border px-3 py-1 text-xs font-semibold",
+                        DIFFICULTY_STYLES[exercise.difficulty] ||
+                          "bg-slate-100 text-slate-700 border-slate-200"
+                      )}
+                    >
+                      {exercise.difficulty}
+                    </span>
                   </div>
-                  <span
-                    className={clsx(
-                      "rounded-full border px-3 py-1 text-xs font-semibold",
-                      DIFFICULTY_STYLES[exercise.difficulty] ||
-                        "bg-slate-100 text-slate-700 border-slate-200"
-                    )}
-                  >
-                    {exercise.difficulty}
-                  </span>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
           </div>
         </div>
       </section>
