@@ -9,17 +9,18 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 const start = async () => {
-  try {
-    await connectDatabase();
-    await seedLectures();
-    await seedCodingExercises();
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error("Failed to start server", error);
-    process.exit(1);
-  }
+  // Bind to 0.0.0.0 so cloud platforms (Render, Railway, etc.) detect open port immediately
+  app.listen(PORT, "0.0.0.0", async () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+
+    try {
+      await connectDatabase();
+      await seedLectures();
+      await seedCodingExercises();
+    } catch (error) {
+      console.error("Startup database initialization warning:", error.message);
+    }
+  });
 };
 
 start();
