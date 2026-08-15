@@ -6,14 +6,11 @@ import {
   BookOpenText,
   CheckCircle2,
   Code2,
-  Cpu,
   FileText,
   Lightbulb,
   Mic,
-  ShieldCheck,
   Sparkles,
-  UsersRound,
-  Zap
+  UsersRound
 } from "lucide-react";
 import appLogo from "../assets/app-logo.png";
 import heroImage from "../assets/hero-img.png";

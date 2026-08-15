@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Filter, PlayCircle, Video } from "lucide-react";
+import { ExternalLink, PlayCircle } from "lucide-react";
 import api from "../services/api";
 
 function ResourcesPage() {

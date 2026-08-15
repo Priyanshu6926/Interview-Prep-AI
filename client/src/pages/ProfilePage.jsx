@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, KeyRound, Loader2, Mail, Shield, User, UserCheck } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 
 function ProfilePage() {
   const { user, updateProfile } = useAuth();

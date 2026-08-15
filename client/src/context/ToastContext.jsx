@@ -1,8 +1,7 @@
-import { createContext, useCallback, useContext, useState } from "react";
+import { useCallback, useState } from "react";
 import { AlertCircle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import clsx from "clsx";
-
-const ToastContext = createContext(null);
+import { ToastContext } from "./toastContextValue";
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
@@ -75,12 +74,4 @@ export function ToastProvider({ children }) {
       </div>
     </ToastContext.Provider>
   );
-}
-
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
-  }
-  return context;
 }

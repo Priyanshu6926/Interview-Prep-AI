@@ -6,7 +6,7 @@ import QuestionAccordion from "../components/QuestionAccordion";
 import ResumeAnalysisCard from "../components/ResumeAnalysisCard";
 import ReadinessReportModal from "../components/ReadinessReportModal";
 import InterviewTimer from "../components/InterviewTimer";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 import { formatDate } from "../utils/formatters";
 import { API_BASE, TOKEN_KEY } from "../utils/constants";
 

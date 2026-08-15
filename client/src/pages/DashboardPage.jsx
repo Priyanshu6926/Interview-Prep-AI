@@ -14,7 +14,7 @@ import {
   UsersRound
 } from "lucide-react";
 import { useSessions } from "../hooks/useSessions";
-import { useToast } from "../context/ToastContext";
+import { useToast } from "../hooks/useToast";
 import { badgeText, formatDate } from "../utils/formatters";
 import ConfirmModal from "../components/ConfirmModal";
 import { SessionSkeleton } from "../components/SkeletonCard";
@@ -28,7 +28,6 @@ function DashboardPage() {
   const [selectedRoleFilter, setSelectedRoleFilter] = useState("");
   const [deleteModalState, setDeleteModalState] = useState({ isOpen: false, sessionId: null, deleting: false });
 
-  const pinnedCount = sessions.reduce((sum, session) => sum + session.questions.filter((item) => item.isPinned).length, 0);
   const attempts = sessions.flatMap((session) => session.questions.flatMap((item) => item.attempts || []));
   const scores = attempts.map((attempt) => attempt.overallScore ?? attempt.score ?? 0).filter((s) => s > 0);
   const averageScore = scores.length ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length) : null;
