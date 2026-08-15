@@ -10,7 +10,7 @@
     "dev": "npm run dev --workspace server",
     "dev:client": "npm run dev --workspace client",
     "dev:server": "npm run dev --workspace server",
-    "build": "npm run build --workspace client && node -e \"const fs=require('fs'); fs.cpSync('client/dist', 'dist', {recursive: true});\"",
+    "build": "npm run build --workspace client",
     "lint": "npm run lint --workspace client"
   }
 }
