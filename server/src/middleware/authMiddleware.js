@@ -12,7 +12,8 @@ export async function protect(req, res, next) {
 
   try {
     const token = authHeader.split(" ")[1];
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const jwtSecret = process.env.JWT_SECRET || "interview_prep_ai_fallback_secret_key_change_in_prod";
+    const payload = jwt.verify(token, jwtSecret);
     const user = await User.findById(payload.userId).select("-password");
 
     if (!user) {
