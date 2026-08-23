@@ -30,14 +30,36 @@ app.use(
     crossOriginEmbedderPolicy: false
   })
 );
+const getCorsOrigin = () => {
+  const clientUrl = process.env.CLIENT_URL;
+  if (!clientUrl || clientUrl === "*") return true;
+  const origins = clientUrl.split(",").map((u) => u.trim().replace(/\/+$/, ""));
+  return (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/+$/, "");
+    if (origins.includes(cleanOrigin) || origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  };
+};
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || true,
+    origin: getCorsOrigin(),
     credentials: true
   })
 );
 app.use(express.json());
 app.use(morgan("dev"));
+
+app.get("/", (_req, res) => {
+  res.json({
+    status: "online",
+    message: "Interview Prep AI Backend Service Running",
+    health: "/api/health"
+  });
+});
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
