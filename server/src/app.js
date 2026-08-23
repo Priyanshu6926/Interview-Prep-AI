@@ -61,15 +61,27 @@ app.get("/", (_req, res) => {
   });
 });
 
+app.get("/health", (_req, res) => {
+  res.json({ ok: true });
+});
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+
 app.use("/api/sessions", sessionRoutes);
+app.use("/sessions", sessionRoutes);
+
 app.use("/api/resources", resourceRoutes);
+app.use("/resources", resourceRoutes);
+
 app.use("/api/coding", codingRoutes);
+app.use("/coding", codingRoutes);
+
 app.use("/api/mock-rooms", mockRoomRoutes);
+app.use("/mock-rooms", mockRoomRoutes);
 
 // Serve static frontend assets if built
 if (fs.existsSync(staticDir)) {
